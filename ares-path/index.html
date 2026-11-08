@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ARES-PATH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="lib/leaflet/leaflet.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <h1>ARES-PATH</h1>
+        <span id="estado-capa"></span>
+        <span id="coordenadas">Mueve el cursor sobre el mapa</span>
+    </header>
+
+    <div id="mapa"></div>
+
+    <!-- Orden importante: Leaflet, luego config, luego el mapa -->
+    <script src="lib/leaflet/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/map.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+/* Estilo "consola espacial": fondo oscuro y verde neón */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    background: #05110c;
+    color: #39ff88;
+    font-family: Consolas, monospace;
+}
+
+header {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 16px;
+    border-bottom: 1px solid #39ff88;
+}
+
+header h1 {
+    font-size: 18px;
+    margin: 0;
+    letter-spacing: 3px;
+}
+
+#estado-capa {
+    font-size: 12px;
+    color: #ffb347;
+}
+
+#coordenadas {
+    margin-left: auto;
+    font-size: 13px;
+}
+
+#mapa {
+    height: calc(100% - 45px);
+    background: #05110c;
+}
