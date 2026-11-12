@@ -1,30 +1,48 @@
 // ============================================================
 // CONFIGURACIÓN DEL PROYECTO
-// Todo dato que no esté verificado queda marcado como PENDIENTE
+// Todo dato no verificado queda marcado como PENDIENTE o NO CONFIRMADO
 // ============================================================
 const CONFIG = {
 
     mapa: {
         // CONFIRMADO: centro de Jezero (Gazetteer USGS, planetocéntrico +Este)
-        // https://planetarynames.wr.usgs.gov/Feature/14300
         centro: [18.41, 77.69],
         zoom: 7,
         zoomMin: 1,
-        zoomMax: 9   // CONFIRMADO: la capa Viking tiene niveles 0 a 9 (XML de capacidades)
+        // Se puede acercar hasta 9, pero las teselas reales solo llegan al 7 (ver zoomMaximo abajo):
+        // los zooms 8 y 9 son el zoom 7 ampliado (se ve borroso, sin teselas nuevas).
+        zoomMax: 9
     },
 
-    // --- Capa base: Viking MDIM 2.1 color, 232 m/px ---
+    // --- Capa base: Viking MDIM 2.1 color ---
     capaBase: {
         nombre: "Viking MDIM 2.1 (color)",
-        // ID, estilo (default), matriz (default028mm) y formato (jpg): CONFIRMADOS en el XML oficial.
-        // NO CONFIRMADO: que esta URL funcione sin api_key y sin límites (probar en el navegador).
-        // PENDIENTE: ver respuesta del Gem (mensaje 2: acceso, llaves y límites)
-        url: "https://api.nasa.gov/mars-wmts/catalog/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg",
-        // Alternativa NO CONFIRMADA (de un sitio de terceros), probar solo si la anterior falla:
-        // "https://trek.nasa.gov/tiles/Mars/EQ/Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg"
-        // PENDIENTE: confirmar texto exacto del crédito (el Gem sugiere "NASA/JPL-Caltech" y USGS)
-        atribucion: "Imágenes: NASA/JPL-Caltech · USGS Astrogeology (Viking MDIM 2.1). Proyecto no avalado por la NASA.",
-        zoomMaximo: 9,
+
+        // FUENTE 1 (la recomienda el Gem): servidor de origen del JPL.
+        // NO CONFIRMADO por mí: que sirva teselas sin llave (probar en el navegador).
+        urlRemota: "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg",
+
+        // FUENTE 2 (respaldo): portal api.nasa.gov. ID de capa CONFIRMADO en su XML;
+        // NO CONFIRMADO: que no tenga límite de peticiones para teselas.
+        urlRespaldo: "https://api.nasa.gov/mars-wmts/catalog/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg",
+
+        // CONFIRMADO por prueba (--niveles, tesela de Jezero): trek.nasa.gov da 200 hasta el zoom 7 y 404 en 8 y 9.
+        // OJO: el XML de api.nasa.gov declara niveles 0 a 9; el servidor trek.nasa.gov no los tiene.
+        zoomMaximo: 7,
+
+        // TESELAS LOCALES (modo offline). Poner activo: true DESPUÉS de correr
+        // scripts/descargar-teselas.js. Si falta una tesela, el mapa la pide a internet.
+        local: {
+            activo: true,
+            url: "data/tiles/{z}/{y}/{x}.jpg",
+
+            // El último nivel con teselas reales es el 7 (ver arriba); Leaflet amplía ese para los zooms 8 y 9.
+            zoomMaximo: 7
+        },
+
+        // CONFIRMADO: el crédito corto "Courtesy NASA/JPL-Caltech." viene de la política de imágenes del JPL.
+        // La frase completa es combinación sugerida por el Gem.
+        atribucion: "Courtesy NASA/JPL-Caltech · Data: NASA, JPL, USGS Astrogeology (Viking MDIM 2.1) · Proyecto estudiantil, no avalado por la NASA",
         tms: false    // CONFIRMADO: el origen de filas WMTS (arriba-izquierda) coincide con Leaflet
     },
 
@@ -49,3 +67,7 @@ const CONFIG = {
         }
     ]
 };
+
+// Permite que los scripts de Node (scripts/descargar-teselas.js) lean este archivo.
+// En el navegador "module" no existe y esta línea no hace nada.
+if (typeof module !== "undefined") { module.exports = CONFIG; }

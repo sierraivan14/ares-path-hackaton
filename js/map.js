@@ -18,29 +18,38 @@ const mapa = L.map("mapa", {
     maxBoundsViscosity: 1.0
 });
 
-// Crea una capa de teselas a partir de un bloque de config.js
-function crearCapa(cfg) {
-    return L.tileLayer(cfg.url, {
-        attribution: cfg.atribucion || "",
-        maxNativeZoom: cfg.zoomMaximo,
-        maxZoom: CONFIG.mapa.zoomMax,
-        tms: cfg.tms || false,
-        opacity: cfg.opacidad || 1
-    });
-}
+// --- 1. Capa base con respaldos ---
+// Orden de intento para cada tesela: local (si está activo) -> remota -> respaldo.
+// Si una falla, el mapa prueba la siguiente; solo avisa si fallan todas.
+const cb = CONFIG.capaBase;
+const usaLocal = cb.local && cb.local.activo;
+const urls = [];
+if (usaLocal) urls.push(cb.local.url);
+if (cb.urlRemota) urls.push(cb.urlRemota);
+if (cb.urlRespaldo) urls.push(cb.urlRespaldo);
 
-// --- 1. Capa base ---
 const capasBase = {};
-if (CONFIG.capaBase.url) {
-    const base = crearCapa(CONFIG.capaBase);
+if (urls.length > 0) {
+    const base = L.tileLayer(urls[0], {
+        attribution: cb.atribucion,
+        maxNativeZoom: usaLocal ? cb.local.zoomMaximo : cb.zoomMaximo,
+        maxZoom: CONFIG.mapa.zoomMax,
+        tms: cb.tms
+    });
     base.addTo(mapa);
-    capasBase[CONFIG.capaBase.nombre] = base;
+    capasBase[cb.nombre] = base;
 
-    // Plan B: si las teselas no cargan, el mapa sigue sirviendo con la cuadrícula
-    let errores = 0;
-    base.on("tileerror", function () {
-        errores++;
-        estado.textContent = "⚠ La capa base no cargó (¿sin internet o URL incorrecta?). Errores: " + errores;
+    let fallos = 0;
+    base.on("tileerror", function (e) {
+        // ¿Queda otra fuente por probar para esta tesela?
+        const intento = Number(e.tile.dataset.intento || 0) + 1;
+        if (intento < urls.length) {
+            e.tile.dataset.intento = intento;
+            e.tile.src = L.Util.template(urls[intento], e.coords);
+            return;
+        }
+        fallos++;
+        estado.textContent = "⚠ Faltan teselas (sin internet o fuera de la zona descargada). Fallos: " + fallos;
     });
 } else {
     estado.textContent = "⚠ Capa base pendiente (ver config.js)";
@@ -50,7 +59,12 @@ if (CONFIG.capaBase.url) {
 const capasSuperpuestas = {};
 CONFIG.capasExtra.forEach(function (cfg) {
     if (cfg.url) {
-        capasSuperpuestas[cfg.nombre] = crearCapa(cfg);
+        capasSuperpuestas[cfg.nombre] = L.tileLayer(cfg.url, {
+            attribution: cfg.atribucion || "",
+            maxNativeZoom: cfg.zoomMaximo,
+            maxZoom: CONFIG.mapa.zoomMax,
+            opacity: cfg.opacidad || 1
+        });
     }
 });
 
